@@ -10,12 +10,13 @@ namespace EventCalendar.Logic
     public class Controller
     {
         private readonly ICollection<Event> _events;
-        public int EventsCount { get { throw new NotImplementedException();} }
+        public int EventsCount => _events.Count;
 
         public Controller()
         {
             _events = new List<Event>();
         }
+
 
         /// <summary>
         /// Ein Event mit dem angegebenen Titel und dem Termin wird für den Einlader angelegt.
@@ -31,9 +32,32 @@ namespace EventCalendar.Logic
         /// <returns>Wurde die Veranstaltung angelegt</returns>
         public bool CreateEvent(Person invitor, string title, DateTime dateTime, int maxParticipators = 0)
         {
-            throw new NotImplementedException();
-        }
+            if (title == null)
+                throw new ArgumentNullException(nameof(title));
+            if (dateTime == null)
+                throw new ArgumentNullException(nameof(dateTime));
+            if (invitor == null)
+                throw new ArgumentNullException(nameof(invitor));
+            if (dateTime.CompareTo(DateTime.Now) > 0)
+                throw new InvalidTimeZoneException(nameof(dateTime));
 
+            bool eventCreated = false;
+            Event newEvent;
+
+            if (maxParticipators > 0)
+            {
+                newEvent = new EventLimited(title, dateTime, invitor, maxParticipators);
+            }
+            else
+            {
+                newEvent = new Event(title, dateTime, invitor);
+            }
+
+            _events.Add(newEvent);
+            eventCreated = true;
+
+            return eventCreated;
+        }
 
         /// <summary>
         /// Liefert die Veranstaltung mit dem Titel
