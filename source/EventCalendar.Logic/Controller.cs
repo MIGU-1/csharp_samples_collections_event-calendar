@@ -32,29 +32,24 @@ namespace EventCalendar.Logic
         /// <returns>Wurde die Veranstaltung angelegt</returns>
         public bool CreateEvent(Person invitor, string title, DateTime dateTime, int maxParticipators = 0)
         {
-            if (title == null)
-                throw new ArgumentNullException(nameof(title));
-            if (dateTime == null)
-                throw new ArgumentNullException(nameof(dateTime));
-            if (invitor == null)
-                throw new ArgumentNullException(nameof(invitor));
-            if (dateTime.CompareTo(DateTime.Now) > 0)
-                throw new InvalidTimeZoneException(nameof(dateTime));
-
             bool eventCreated = false;
-            Event newEvent;
 
-            if (maxParticipators > 0)
+            if (CheckParameters(invitor, title, dateTime))
             {
-                newEvent = new EventLimited(title, dateTime, invitor, maxParticipators);
-            }
-            else
-            {
-                newEvent = new Event(title, dateTime, invitor);
-            }
+                Event newEvent;
 
-            _events.Add(newEvent);
-            eventCreated = true;
+                if (maxParticipators > 0)
+                {
+                    newEvent = new EventLimited(title, dateTime, invitor, maxParticipators);
+                }
+                else
+                {
+                    newEvent = new Event(title, dateTime, invitor);
+                }
+
+                _events.Add(newEvent);
+                eventCreated = true;
+            }
 
             return eventCreated;
         }
@@ -66,7 +61,15 @@ namespace EventCalendar.Logic
         /// <returns>Event oder null, falls es keine Veranstaltung mit dem Titel gibt</returns>
         public Event GetEvent(string title)
         {
-            throw new NotImplementedException();
+            Event retEvent = null;
+
+            foreach (Event myEvent in _events)
+            {
+                if (myEvent.Title.Equals(title, StringComparison.CurrentCultureIgnoreCase))
+                    retEvent = myEvent;
+            }
+
+            return retEvent;
         }
 
         /// <summary>
@@ -78,7 +81,54 @@ namespace EventCalendar.Logic
         /// <returns>War die Registrierung erfolgreich?</returns>
         public bool RegisterPersonForEvent(Person person, Event ev)
         {
-            throw new NotImplementedException();
+            bool registerOk = true;
+
+            if (ev != null && person != null)
+            {
+                foreach (Event myEvent in _events)
+                {
+                    foreach (Person myPerson in myEvent.Persons)
+                    {
+                        if (myPerson.Equals(person) && ev.DateTimeEvent == myEvent.DateTimeEvent)
+                        {
+                            registerOk = false;
+                        }
+                    }
+                }
+
+                if (registerOk && !ev.Persons.Contains<Person>(person))
+                {
+                    if (ev.GetType().Equals(typeof(EventLimited)))
+                    {
+                        EventLimited tmp = ev as EventLimited;
+                        if (tmp.Persons.Count < tmp.MaxParticipators)
+                        {
+                            person.Events.Add(ev);
+                            ev.Persons.Add(person);
+                        }
+                        else
+                        {
+                            registerOk = false;
+                        }
+                    }
+                    else
+                    {
+                        person.Events.Add(ev);
+                        ev.Persons.Add(person);
+                    }
+
+                }
+                else
+                {
+                    registerOk = false;
+                }
+            }
+            else
+            {
+                registerOk = false;
+            }
+
+            return registerOk;
         }
 
         /// <summary>
@@ -89,7 +139,19 @@ namespace EventCalendar.Logic
         /// <returns>War die Abmeldung erfolgreich?</returns>
         public bool UnregisterPersonForEvent(Person person, Event ev)
         {
-            throw new NotImplementedException();
+            bool unregisterOk = false;
+
+            if (person != null && ev != null)
+            {
+                unregisterOk = ev.Persons.Contains<Person>(person);
+                if (unregisterOk)
+                {
+                    ev.Persons.Remove(person);
+                    person.Events.Remove(ev);
+                }
+            }
+
+            return unregisterOk;
         }
 
         /// <summary>
@@ -101,7 +163,10 @@ namespace EventCalendar.Logic
         /// <returns>Liste der Teilnehmer oder null im Fehlerfall</returns>
         public IList<Person> GetParticipatorsForEvent(Event ev)
         {
-            throw new NotImplementedException();
+            if (ev != null)
+                ev.Persons.Sort();
+
+            return ev != null ? ev.Persons : null;
         }
 
         /// <summary>
@@ -111,7 +176,10 @@ namespace EventCalendar.Logic
         /// <returns>Liste der Veranstaltungen oder null im Fehlerfall</returns>
         public List<Event> GetEventsForPerson(Person person)
         {
-            throw new NotImplementedException();
+            if (person != null)
+                person.Events.Sort();
+
+            return person != null ? person.Events : null;
         }
 
         /// <summary>
@@ -121,7 +189,19 @@ namespace EventCalendar.Logic
         /// <returns>Anzahl oder 0 im Fehlerfall</returns>
         public int CountEventsForPerson(Person participator)
         {
-            throw new NotImplementedException();
+            return participator != null ? participator.Events.Count : 0;
+        }
+        private bool CheckParameters(Person invitor, string title, DateTime dateTime)
+        {
+            bool titleUnique = true;
+
+            foreach (Event myEvent in _events)
+            {
+                if (myEvent.Title.Equals(title))
+                    titleUnique = false;
+            }
+
+            return invitor != null && title != null && title != "" && dateTime.CompareTo(DateTime.Now) > 0 && titleUnique;
         }
 
     }
