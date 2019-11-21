@@ -34,8 +34,11 @@ namespace EventCalendar.Logic
         {
             bool eventCreated = false;
 
-            if (CheckParameters(invitor, title, dateTime))
+            try
             {
+                if (DoesTitleAlreadyExist(title))
+                    throw new ArgumentException("The 'title' parameter has to be unique!");
+
                 Event newEvent;
 
                 if (maxParticipators > 0)
@@ -50,6 +53,10 @@ namespace EventCalendar.Logic
                 _events.Add(newEvent);
                 eventCreated = true;
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
 
             return eventCreated;
         }
@@ -61,6 +68,9 @@ namespace EventCalendar.Logic
         /// <returns>Event oder null, falls es keine Veranstaltung mit dem Titel gibt</returns>
         public Event GetEvent(string title)
         {
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentNullException("title");
+
             Event retEvent = null;
 
             foreach (Event myEvent in _events)
@@ -191,18 +201,17 @@ namespace EventCalendar.Logic
         {
             return participator != null ? participator.Events.Count : 0;
         }
-        private bool CheckParameters(Person invitor, string title, DateTime dateTime)
+        private bool DoesTitleAlreadyExist(string title)
         {
-            bool titleUnique = true;
+            bool titleAlreadyExist = false;
 
             foreach (Event myEvent in _events)
             {
                 if (myEvent.Title.Equals(title))
-                    titleUnique = false;
+                    titleAlreadyExist = true;
             }
 
-            return invitor != null && title != null && title != "" && dateTime.CompareTo(DateTime.Now) > 0 && titleUnique;
+            return titleAlreadyExist;
         }
-
     }
 }

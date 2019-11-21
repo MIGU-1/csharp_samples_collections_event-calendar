@@ -12,12 +12,14 @@ namespace EventCalendar.Entities
 
         public Event(string title, DateTime dateTime, Person invitor)
         {
-            if (title == null)
-                throw new ArgumentNullException(nameof(title));
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentNullException("title");
             if (dateTime == null)
-                throw new ArgumentNullException(nameof(dateTime));
+                throw new ArgumentNullException("time");
+            if (dateTime < DateTime.Now)
+                throw new ArgumentException("The 'dateTime' parameter has to be in the future!");
             if (invitor == null)
-                throw new ArgumentNullException(nameof(invitor));
+                throw new ArgumentNullException("invitor");
 
             Title = title;
             DateTimeEvent = dateTime;
@@ -28,6 +30,10 @@ namespace EventCalendar.Entities
         public int CompareTo(Event other)
         {
             return this.DateTimeEvent.CompareTo(other.DateTimeEvent);
+        }
+        public void CancelEvent()
+        {
+            throw new NotImplementedException();
         }
     }
 }

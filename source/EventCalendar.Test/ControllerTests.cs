@@ -1,14 +1,14 @@
-﻿using System;
-using EventCalendar.Entities;
+﻿using EventCalendar.Entities;
 using EventCalendar.Logic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace EventCalendar.Test
 {
-    [TestClass()]
+    [TestClass]
     public class ControllerTests
     {
-        [TestMethod()]
+        [TestMethod]
         public void Constructor_NoEvent_ShouldReturnCountZero()
         {
             // Arrange
@@ -18,67 +18,110 @@ namespace EventCalendar.Test
             Assert.AreEqual(0, controller.EventsCount);
         }
 
-        [TestMethod()]
-        public void CreateEvent_AllOk_ShouldReturnTrue()
+        [TestMethod]
+        public void CreateEvent_AllOk_ShouldNotThrowAnyException()
         {
             // Arrange
             Controller controller = new Controller();
             Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
-            // Act
-            bool ok = controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
+            try
+            {
+                // Act
+                controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
+            }
             // Assert
-            Assert.IsTrue(ok);
+            catch (Exception e)
+            {
+                Assert.Fail("Expected no exception, but got: " + e.Message);
+            }
         }
 
-        [TestMethod()]
-        public void CreateEvent_PersonNullOrEmpty_ShouldReturnFalse()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void CreateEvent_InvitorNull_ShouldThrowArgumentNullExceptionInvitor()
         {
             // Arrange
             Controller controller = new Controller();
-            // Act
-            bool ok = controller.CreateEvent(null, "First Event", DateTime.Now.AddDays(1));
+
+            try
+            {
+                // Act
+                controller.CreateEvent(null, "First Event", DateTime.Now.AddDays(1));
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "invitor", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void CreateEvent_TitleNullOrEmpty_ShouldReturnFalse()
-        {
-            // Arrange
-            Controller controller = new Controller();
-            Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
-            // Act
-            bool ok = controller.CreateEvent(invitor, "", DateTime.Now.AddDays(1));
-            // Assert
-            Assert.IsFalse(ok);
-        }
-
-        [TestMethod()]
-        public void CreateEvent_DateInThePast_ShouldReturnFalse()
-        {
-            // Arrange
-            Controller controller = new Controller();
-            Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
-            // Act
-            bool ok = controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(-1));
-            // Assert
-            Assert.IsFalse(ok);
-        }
-
-        [TestMethod()]
-        public void CreateEvent_TitleNotUnique_ShouldReturnFalse()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void CreateEvent_TitleNullOrEmpty_ShouldThrowArgumentNullExceptionTitle()
         {
             // Arrange
             Controller controller = new Controller();
             Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
+
+            try
+            {
+                // Act
+                controller.CreateEvent(invitor, "", DateTime.Now.AddDays(1));
+            }
+            // Assert
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "title", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CreateEvent_DateInThePast_ShouldThrowArgumentException()
+        {
+            // Arrange
+            Controller controller = new Controller();
+            Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
+
+            try
+            {
+                // Act
+                controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(-1));
+            }
+            // Assert
+            catch (ArgumentException e)
+            {
+                Assert.AreEqual("The 'dateTime' parameter has to be in the future!", e.Message);
+                throw;
+            }
+        }
+
+        [TestMethod()]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CreateEvent_TitleNotUnique_ShouldThrowArgumentException()
+        {
+            // Arrange
+            Controller controller = new Controller();
+            Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
+
             // Act
             controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
-            bool ok = controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
+
+            try
+            {
+                controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (ArgumentException e)
+            {
+                Assert.AreEqual("The 'title' parameter has to be unique!", e.Message);
+                throw;
+            }
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void EventsCount_FirstEventWithoutParticipators_ShouldReturnOneEvent()
         {
             // Arrange
@@ -90,29 +133,47 @@ namespace EventCalendar.Test
             Assert.AreEqual(1, controller.EventsCount);
         }
 
-        [TestMethod()]
-        public void GetEvent_TitleNull_ShouldReturnNull()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GetEvent_TitleNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
-            // Act
-            var ev = controller.GetEvent(null);
+
+            try
+            {
+                // Act
+                Event ev = controller.GetEvent(null);
+            }
             // Assert
-            Assert.IsNull(ev);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "title", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void GetEvent_TitleEmpty_ShouldReturnNull()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GetEvent_TitleEmpty_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
-            // Act
-            var ev = controller.GetEvent("");
+
+            try
+            {
+                // Act
+                controller.GetEvent("");
+            }
             // Assert
-            Assert.IsNull(ev);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "title", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetEvent_TitleFound_ShouldReturnNull()
         {
             // Arrange
@@ -125,7 +186,7 @@ namespace EventCalendar.Test
             Assert.IsNull(ev);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetEvent_Title_ShouldReturnEvent()
         {
             // Arrange
@@ -139,7 +200,8 @@ namespace EventCalendar.Test
             Assert.AreEqual("First Event", ev.Title);
         }
 
-        [TestMethod()]
+        /*
+        [TestMethod]
         public void CountEventsForPerson_TwoEventsRegistered_ShouldReturnTwo()
         {
             // Arrange
@@ -158,8 +220,9 @@ namespace EventCalendar.Test
             Assert.AreEqual(2, eventsCounterParticipatoricipator1);
         }
 
-        [TestMethod()]
-        public void CountEventsForPerson_OneEventsRegisteredTwice_ShouldReturnOne()
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void CountEventsForPerson_OneEventRegisteredTwice_ShouldThrowInvalidOperationException()
         {
             // Arrange
             Controller controller = new Controller();
@@ -167,15 +230,48 @@ namespace EventCalendar.Test
             controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
             Event ev1 = controller.GetEvent("First Event");
             Person participator1 = new Person("Part1", "Hans");
-            controller.RegisterPersonForEvent(participator1, ev1);
-            controller.RegisterPersonForEvent(participator1, ev1);
+
             // Act
-            int eventsCounterParticipator1 = controller.CountEventsForPerson(participator1);
+            try
+            {
+                controller.RegisterPersonForEvent(participator1, ev1);
+                controller.RegisterPersonForEvent(participator1, ev1);
+
+                controller.CountEventsForPerson(participator1);
+            }
             // Assert
-            Assert.AreEqual(1, eventsCounterParticipator1);
+            catch (InvalidOperationException e)
+            {
+                Assert.IsTrue(String.Equals(e.Message, "The person is already registered", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void CancelEvent_EventIsAlreadyCanceled_ShouldThrowInvalidOperationException()
+        {
+            // Arrange
+            Controller controller = new Controller();
+            Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
+            controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
+            Event ev1 = controller.GetEvent("First Event");
+            ev1.CancelEvent();
+
+            // Act
+            try
+            {
+                ev1.CancelEvent();
+            }
+            // Assert
+            catch (InvalidOperationException e)
+            {
+                Assert.IsTrue(String.Equals(e.Message, "The event is already canceled!", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
+        }
+
+        [TestMethod]
         public void CountEventsForPerson_OneEventsRegisteredAndUnregistered_ShouldReturnZero()
         {
             // Arrange
@@ -192,7 +288,7 @@ namespace EventCalendar.Test
             Assert.AreEqual(0, eventsCounterParticipator1);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void CountEventsForPerson_ZeroRegisteredAndUnregistered_ShouldReturnZero()
         {
             // Arrange
@@ -204,18 +300,27 @@ namespace EventCalendar.Test
             Assert.AreEqual(0, eventsCounterParticipator1);
         }
 
-        [TestMethod()]
-        public void CountEventsForPerson_PersonNull_ShouldReturnZero()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void CountEventsForPerson_PersonNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
-            // Act
-            int eventsCounterParticipator1 = controller.CountEventsForPerson(null);
+
+            try
+            {
+                // Act
+                controller.CountEventsForPerson(null);
+            }
             // Assert
-            Assert.AreEqual(0, eventsCounterParticipator1);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "participator", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetParticipatorsForEvent_FirstEventWithoutParticipators_ShouldReturnEmptyList()
         {
             // Arrange
@@ -229,19 +334,28 @@ namespace EventCalendar.Test
             Assert.AreEqual(0, participators.Count);
         }
 
-        [TestMethod()]
-        public void GetParticipatorsForEvent_PersonNotRegistered_ShouldReturnNull()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GetParticipatorsForEvent_EventNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
-            // Act
-            var people = controller.GetParticipatorsForEvent(null);
+
+            try
+            {
+                // Act
+                controller.GetParticipatorsForEvent(null);
+            }
             // Assert
-            Assert.IsNull(people);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "event", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
 
-        [TestMethod()]
+        [TestMethod]
         public void GetParticipatorsForEvent_TwoParticipatorsDifferentEventCounterCorrectOrder_ShouldReturnSameOrder()
         {
             // Arrange
@@ -254,15 +368,16 @@ namespace EventCalendar.Test
             Person participator2 = new Person("Part2", "Franz");
             controller.RegisterPersonForEvent(participator1, ev1);
             controller.RegisterPersonForEvent(participator2, ev1);
-            controller.RegisterPersonForEvent(participator1, ev2);
+
             // Act
             var people = controller.GetParticipatorsForEvent(ev1);
+
             // Assert
             Assert.AreSame(participator1, people[0]);
             Assert.AreSame(participator2, people[1]);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetParticipatorsForEvent_TwoParticipatorsDifferentEventCounterRegisteredWrongOrder_ShouldReturnCorrectOrder()
         {
             // Arrange
@@ -270,20 +385,20 @@ namespace EventCalendar.Test
             Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
             controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
             Event ev1 = controller.GetEvent("First Event");
-            Event ev2 = controller.GetEvent("Second Event");
             Person participator1 = new Person("Part1", "Hans");
             Person participator2 = new Person("Part2", "Franz");
             controller.RegisterPersonForEvent(participator2, ev1);
             controller.RegisterPersonForEvent(participator1, ev1);
-            controller.RegisterPersonForEvent(participator1, ev2);
+
             // Act
             var people = controller.GetParticipatorsForEvent(ev1);
+
             // Assert
             Assert.AreSame(participator1, people[0]);
             Assert.AreSame(participator2, people[1]);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetParticipatorsForEvent_TwoParticipatorsSameEventCounterRegisteredWrongOrder_ShouldReturnCorrectOrder()
         {
             // Arrange
@@ -302,7 +417,7 @@ namespace EventCalendar.Test
             Assert.AreSame(participator2, people[1]);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetParticipatorsForEvent_TwoParticipatorsSameEventCounterRegisteredCorrectOrder_ShouldReturnCorrectOrder()
         {
             // Arrange
@@ -321,7 +436,7 @@ namespace EventCalendar.Test
             Assert.AreSame(participator2, people[1]);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetEventsForPerson_TwoEventsRegisteredInCorrectOrder_ShouldReturnTwoEvents()
         {
             // Arrange
@@ -341,7 +456,7 @@ namespace EventCalendar.Test
             Assert.AreSame(ev2, events[1]);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void GetEventsForPerson_TwoEventsRegisteredInWrongOrder_ShouldReturnTwoEvents()
         {
             // Arrange
@@ -361,20 +476,29 @@ namespace EventCalendar.Test
             Assert.AreSame(ev2, events[1]);
         }
 
-        [TestMethod()]
-        public void GetEventsForPerson_PersonNull_ShouldReturnNull()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GetEventsForPerson_PersonNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
-            // Act
-            var events = controller.GetEventsForPerson(null);
+
+            try
+            {
+                // Act
+                var events = controller.GetEventsForPerson(null);
+            }
             // Assert
-            Assert.IsNull(events);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "person", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
 
-        [TestMethod()]
-        public void UnregisterPersonFromEvent_UnregisterOneOfTwo_ShouldReturnTrue()
+        [TestMethod]
+        public void UnregisterPersonFromEvent_UnregisterOneOfTwo_ShouldNotThrowAnyException()
         {
             // Arrange
             Controller controller = new Controller();
@@ -386,40 +510,67 @@ namespace EventCalendar.Test
             Person participator1 = new Person("Part1", "Hans");
             controller.RegisterPersonForEvent(participator1, ev1);
             controller.RegisterPersonForEvent(participator1, ev2);
-            // Act
-            bool ok = controller.UnregisterPersonForEvent(participator1, ev1);
+            try
+            {
+                // Act
+                controller.UnregisterPersonForEvent(participator1, ev1);
+            }
             // Assert
-            Assert.IsTrue(ok);
+            catch (Exception e)
+            {
+                Assert.Fail("Expected no exception, but got: " + e.Message);
+            }
         }
 
-        [TestMethod()]
-        public void UnregisterPersonFromEvent_PersonNull_ShouldReturnFalse()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void UnregisterPersonFromEvent_PersonNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
             Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
             controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
             Event ev1 = controller.GetEvent("First Event");
-            // Act
-            bool ok = controller.UnregisterPersonForEvent(null, ev1);
+
+            try
+            {
+                // Act
+                controller.UnregisterPersonForEvent(null, ev1);
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "person", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void UnregisterPersonFromEvent_EventNull_ShouldReturnFalse()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void UnregisterPersonFromEvent_EventNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
             Person participator1 = new Person("Part1", "Hans");
-            // Act
-            bool ok = controller.UnregisterPersonForEvent(participator1, null);
+
+            try
+            {
+                // Act
+                controller.UnregisterPersonForEvent(participator1, null);
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "event", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void UnregisterPersonFromEvent_PersonNotRegistered_ShouldReturnFalse()
+
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void UnregisterPersonFromEvent_PersonNotRegistered_ShouldThrowInvalidOperationException()
         {
             // Arrange
             Controller controller = new Controller();
@@ -433,14 +584,22 @@ namespace EventCalendar.Test
             controller.RegisterPersonForEvent(participator1, ev1);
             controller.RegisterPersonForEvent(participator1, ev2);
             controller.RegisterPersonForEvent(participator2, ev1);
-            // Act
-            bool ok = controller.UnregisterPersonForEvent(participator2, ev2);
+
+            try
+            {
+                // Act
+                controller.UnregisterPersonForEvent(participator2, ev2);
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (InvalidOperationException e)
+            {
+                Assert.IsTrue(String.Equals(e.Message, "The person has no registration for the event!", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void RegisterForLimitedEvent_SecondOfTwoParticipators_ShouldReturnTrue()
+        [TestMethod]
+        public void RegisterForLimitedEvent_SecondOfTwoParticipators_ShouldNotThrowAnyException()
         {
             // Arrange
             Controller controller = new Controller();
@@ -450,14 +609,21 @@ namespace EventCalendar.Test
             Person participator1 = new Person("Part1", "Hans");
             Person participator2 = new Person("Part2", "Franz");
             controller.RegisterPersonForEvent(participator1, ev1);
-            // Act
-            bool ok = controller.RegisterPersonForEvent(participator2, ev1);
+
+            try
+            {
+                // Act
+                controller.RegisterPersonForEvent(participator2, ev1);
+            }
             // Assert
-            Assert.IsTrue(ok);
+            catch (Exception e)
+            {
+                Assert.Fail("Expected no exception, but got: " + e.Message);
+            }
         }
 
-        [TestMethod()]
-        public void RegisterPersonForEvent_FirstRegistration_ShouldReturnTrue()
+        [TestMethod]
+        public void RegisterPersonForEvent_FirstRegistration_ShouldNotThrowAnyExceptions()
         {
             // Arrange
             Controller controller = new Controller();
@@ -465,56 +631,69 @@ namespace EventCalendar.Test
             controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
             Event ev1 = controller.GetEvent("First Event");
             Person participator1 = new Person("Part1", "Hans");
-            // Act
-            bool ok = controller.RegisterPersonForEvent(participator1, ev1);
+
+            try
+            {
+                // Act
+                controller.RegisterPersonForEvent(participator1, ev1);
+            }
             // Assert
-            Assert.IsTrue(ok);
+            catch (Exception e)
+            {
+                Assert.Fail("Expected no exception, but got: " + e.Message);
+            }
         }
 
-        [TestMethod()]
-        public void RegisterPersonForEvent_RegistrationTwice_ShouldReturnFalse()
+
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void RegisterPersonForEvent_PersonNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
             Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
             controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
             Event ev1 = controller.GetEvent("First Event");
-            Person participator1 = new Person("Part1", "Hans");
-            controller.RegisterPersonForEvent(participator1, ev1);
-            // Act
-            bool ok = controller.RegisterPersonForEvent(participator1, ev1);
+
+            try
+            {
+                // Act
+                controller.RegisterPersonForEvent(null, ev1);
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "person", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void RegisterPersonForEvent_PersonNull_ShouldReturnFalse()
-        {
-            // Arrange
-            Controller controller = new Controller();
-            Person invitor = new Person("Huber", "Max") { MailAddress = "max.huber@x.x", PhoneNumber = "1234567" };
-            controller.CreateEvent(invitor, "First Event", DateTime.Now.AddDays(1));
-            Event ev1 = controller.GetEvent("First Event");
-            // Act
-            bool ok = controller.RegisterPersonForEvent(null, ev1);
-            // Assert
-            Assert.IsFalse(ok);
-        }
-
-        [TestMethod()]
-        public void RegisterPersonForEvent_EventNull_ShouldReturnFalse()
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void RegisterPersonForEvent_EventNull_ShouldThrowArgumentNullException()
         {
             // Arrange
             Controller controller = new Controller();
             Person participator1 = new Person("Part1", "Hans");
-            // Act
-            bool ok = controller.RegisterPersonForEvent(participator1, null);
+
+            try
+            {
+                // Act
+                controller.RegisterPersonForEvent(participator1, null);
+            }
             // Assert
-            Assert.IsFalse(ok);
+            catch (ArgumentNullException e)
+            {
+                Assert.IsTrue(String.Equals(e.ParamName, "event", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-        [TestMethod()]
-        public void RegisterForLimitedEvent_SecondParticipatorByLimitOne_ShouldReturnFalse()
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void RegisterForLimitedEvent_SecondParticipatorByLimitOne_ShouldThrowInvalidOperationException()
         {
             // Arrange
             Controller controller = new Controller();
@@ -524,13 +703,19 @@ namespace EventCalendar.Test
             Person participator1 = new Person("Part1", "Hans");
             Person participator2 = new Person("Part2", "Franz");
             controller.RegisterPersonForEvent(participator1, ev1);
-            // Act
-            bool ok = controller.RegisterPersonForEvent(participator2, ev1);
-            // Assert
-            Assert.IsFalse(ok);
+
+            try
+            {
+                // Act
+                controller.RegisterPersonForEvent(participator2, ev1);
+            }
+            catch (InvalidOperationException e)
+            {
+                Assert.IsTrue(String.Equals(e.Message, "The maximum number of registrations has been reached!", StringComparison.OrdinalIgnoreCase));
+                throw;
+            }
         }
 
-
-
+    */
     }
 }
